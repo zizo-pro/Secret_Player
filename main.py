@@ -10,6 +10,7 @@ from add_folder import addfolder
 from pyqt_music_player_widget import MusicPlayerWidget
 from PyQt5.QtMultimedia import QMediaPlayer,QMediaContent,QMediaPlaylist,QAudioOutput
 import mutagen
+from threading  import Thread
 
 
 
@@ -116,7 +117,8 @@ class mainapp(QMainWindow,FORM_CLASS):
 
 						self.player.load(fr"{self.x[y].strip()}\\{parnt}\\{self.song_dict[selected]}")
 						self.player.play()
-						self.time()
+						# self.thread()
+						self.timebar_man(fr"{self.x[y].strip()}\\{parnt}\\{self.song_dict[selected]}")
 						self.song_title.setText(selected)
 						self.song_artist.setText(parnt)
 						self.pause_bt.show()
@@ -128,15 +130,22 @@ class mainapp(QMainWindow,FORM_CLASS):
 			# print(self.treeWidget.isExpanded(it))
 			self.treeWidget.expandItem(it)
 
+	def timebar_man(self,song):
+		song_len = mutagen.mp3.MP3(song).info.length
+		songi = song_len/60
+		songindx = str(songi).find(".")
+		self.song_time.setText(f"{str(songi)[:songindx]}:{int(float(str(songi)[songindx:])*60)}")
+
+
 	def pause(self):
 		self.player.pause()
 		
 		self.pause_bt.hide()
 		self.play_bt.show()
-	
+
 	def resume(self):
 		self.player.unpause()
-
+		self.thread()
 		self.play_bt.hide()
 		self.pause_bt.show()
 
@@ -146,18 +155,12 @@ class mainapp(QMainWindow,FORM_CLASS):
 		print(float(newvol/100))
 
 	def time(self):
-		while self.player.get_busy:
-			print(self.player.get_pos())
-# class progbar(QThread):
-# 	progval = pyqtSignal(int)
-# 	def __init__(self,parent=None):
-# 		super(progbar,self).__init__(parent)
-# 		QThread.__init__(self)
-# 		self.isRunning = True
-# 	def run(self):
-# 		while True:
-# 			myposs = window.player.get_pos()
-# 			window.music_prog.setValue(myposs)
+		while self.player.get_busy() == True:
+			print(self.player.get_pos()/1000)
+
+	def thread(self):
+		t1 = Thread(target=self.time)
+		t1.start()
 
 if __name__ == "__main__":
   app = QApplication(argv)
